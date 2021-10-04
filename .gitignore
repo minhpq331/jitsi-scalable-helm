@@ -1,0 +1,8 @@
+# Various IDEs
+.project
+.idea/
+*.tmproj
+*.sublime-project
+*.sublime-workspace
+.vscode/
+.DS_Store
