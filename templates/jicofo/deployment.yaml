@@ -1,4 +1,4 @@
-{{- range $shardName, $shardConfig := .Values.shards }}
+{{- range $shardName, $shardConfig := .Values.global.shards }}
 {{- $fullShardName := include "jitsi.fullShardName" (dict "root" $ "shardName" $shardName) -}}
 {{- with $ }}
 ---

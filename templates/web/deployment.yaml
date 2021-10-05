@@ -1,4 +1,4 @@
-{{- range $shardName, $shardConfig := .Values.shards }}
+{{- range $shardName, $shardConfig := .Values.global.shards }}
 {{- $fullShardName := include "jitsi.fullShardName" (dict "root" $ "shardName" $shardName) -}}
 {{- with $ }}
 ---
@@ -73,8 +73,20 @@ spec:
             {{- end }}
           {{- end }}
           env:
+            - name: ENABLE_LETSENCRYPT
+              value: "0"
+            - name: ENABLE_HSTS
+              value: "0"            
+            - name: ENABLE_IPV6
+              value: "0"
+            - name: DISABLE_HTTPS
+              value: "1"
+            - name: JVB_TCP_HARVESTER_DISABLED
+              value: "true"
             - name: DEPLOYMENTINFO_SHARD
               value: {{ if .Values.web.showShardName }}"1"{{ else }}"0"{{ end }}
+            - name: XMPP_BOSH_URL_BASE
+              value: http://{{ $fullShardName }}-prosody:{{ index .Values.prosody.service.ports "bosh-insecure"}}
             - name: XMPP_DOMAIN
               valueFrom:
                 configMapKeyRef:

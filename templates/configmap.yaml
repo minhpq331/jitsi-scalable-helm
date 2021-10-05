@@ -13,6 +13,6 @@ data:
   XMPP_INTERNAL_MUC_DOMAIN: {{ .Values.global.xmpp.internalMucDomain | default (printf "internal-muc.%s" (include "jitsi.xmpp.domain" .)) }}
   {{- range $key, $value := .Values.global.env }}
   {{- if not (kindIs "invalid" $value) }}
-  {{ $key }}: {{ tpl $value $ | quote }}
+  {{ $key }}: {{ if typeIs "string" $value}}{{ tpl $value $ | quote }}{{ else }}{{ $value | quote }}{{ end }}
   {{- end }}
   {{- end }}

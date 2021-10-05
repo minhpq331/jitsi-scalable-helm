@@ -1,4 +1,4 @@
-{{- range $shardName, $shardConfig := .Values.shards }}
+{{- range $shardName, $shardConfig := .Values.global.shards }}
 {{- $fullShardName := include "jitsi.fullShardName" (dict "root" $ "shardName" $shardName) -}}
 {{- with $ }}
 ---
@@ -101,6 +101,8 @@ spec:
               subPath: {{ .name }}
             {{- end }}
           env:
+            - name: JVB_TCP_HARVESTER_DISABLED
+              value: "true"
             - name: XMPP_DOMAIN
               valueFrom:
                 configMapKeyRef:

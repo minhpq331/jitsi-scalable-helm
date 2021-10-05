@@ -56,4 +56,4 @@ data:
       # _http._tcp.web.jitsi.svc.cluster.local:80 is a SRV DNS record
       # A records don't work here because their order might change between calls and would result in different
       # shard IDs for each peered HAproxy
-      server-template shard 0-{{ len (keys .Values.shards) }} _http._tcp.{{ include "jitsi.fullname" . }}-web.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.web.service.port }} check resolvers kube-dns init-addr none
+      server-template shard 0-{{ len (keys .Values.global.shards) }} _http._tcp.{{ include "jitsi.fullname" . }}-web.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.web.service.port }} check resolvers kube-dns init-addr none
