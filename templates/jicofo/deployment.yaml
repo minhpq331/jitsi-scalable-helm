@@ -1,0 +1,113 @@
+{{- range $shardName, $shardConfig := .Values.shards }}
+{{- $fullShardName := include "jitsi.fullShardName" (dict "root" $ "shardName" $shardName) -}}
+{{- with $ }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fullShardName }}-jicofo
+  labels:
+    {{- include "jitsi.labels" . | nindent 4 }}
+    jitsi/component: jicofo
+    jitsi/shard: "{{ $shardName }}"
+spec:
+  replicas: 1 # Only allow 1 replica per shard
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      {{- include "jitsi.selectorLabels" . | nindent 6 }}
+      jitsi/component: jicofo
+      jitsi/shard: "{{ $shardName }}"
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        {{- with .Values.jicofo.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "jitsi.selectorLabels" . | nindent 8 }}
+        jitsi/component: jicofo
+        jitsi/shard: "{{ $shardName }}"
+    spec:
+      {{- with .Values.jicofo.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.jicofo.image.repository }}:{{ .Values.jicofo.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.jicofo.image.pullPolicy }}
+          readinessProbe:
+            # caution: this readinessProbe tries to create a new conference and hence also fails if
+            # dependencies (jvb, prosody) are not available
+            httpGet:
+              path: /about/health
+              port: 8888
+          env:
+            - name: JICOFO_ENABLE_HEALTH_CHECKS
+              value: "1"
+            - name: JICOFO_ENABLE_BRIDGE_HEALTH_CHECKS
+              value: "1"
+            - name: XMPP_SERVER
+              value: {{ $fullShardName }}-prosody
+            - name: XMPP_DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "jitsi.fullname" . | quote }}
+                  key: XMPP_DOMAIN
+            - name: XMPP_AUTH_DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "jitsi.fullname" . | quote }}
+                  key: XMPP_AUTH_DOMAIN
+            - name: XMPP_INTERNAL_MUC_DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "jitsi.fullname" . | quote }}
+                  key: XMPP_INTERNAL_MUC_DOMAIN
+            - name: XMPP_MUC_DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "jitsi.fullname" . | quote }}
+                  key: XMPP_MUC_DOMAIN
+            {{- range $key, $value := .Values.env }}
+            {{- if has $key $.Values.jicofo.allowedEnv }}
+            - name: {{ $key | quote }}
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "jitsi.fullname" $ | quote }}
+                  key: {{ $key | quote }}
+            {{- end }}
+            {{- end }}
+            {{- range $key, $value := .Values.secretEnvs }}
+            {{- if has $key $.Values.jicofo.allowedEnv }}
+            - name: {{ $key | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "jitsi.fullname" $ | quote }}
+                  key: {{ $key | quote }}
+            {{- end }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.jicofo.resources | nindent 12 }}
+      {{- with .Values.jicofo.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.jicofo.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.jicofo.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
+{{- end }}
+
