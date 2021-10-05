@@ -60,3 +60,20 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Create a default fully qualified shard name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+If release name contains chart name it will be used as a full name.
+*/}}
+{{- define "jitsi.fullShardName" -}}
+{{- printf "%s-%s" (include "jitsi.fullname" .root | trunc 40) .shardName | trunc 55 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "jitsi.xmpp.domain" -}}
+{{- if  .Values.xmpp.domain -}}
+  {{ .Values.xmpp.domain }}
+{{- else -}}
+  {{ .Release.Namespace }}.svc
+{{- end -}}
+{{- end -}}
