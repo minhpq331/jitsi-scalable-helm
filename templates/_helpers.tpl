@@ -71,8 +71,8 @@ If release name contains chart name it will be used as a full name.
 {{- end }}
 
 {{- define "jitsi.xmpp.domain" -}}
-{{- if  .Values.xmpp.domain -}}
-  {{ .Values.xmpp.domain }}
+{{- if  .Values.global.xmpp.domain -}}
+  {{ .Values.global.xmpp.domain }}
 {{- else -}}
   {{ .Release.Namespace }}.svc
 {{- end -}}

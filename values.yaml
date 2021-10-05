@@ -5,17 +5,33 @@
 nameOverride: ""
 fullnameOverride: ""
 
-xmpp:
-  domain: meet.jitsi
-  authDomain:
-  mucDomain:
-  internalMucDomain:
-  guestDomain:
+global:
+  xmpp:
+    domain: meet.jitsi
+    authDomain:
+    mucDomain:
+    internalMucDomain:
+    guestDomain:
+  env: 
+    AUTH_TYPE: jwt
 
-env: 
-  AUTH_TYPE: jwt
+  secretEnvs: 
+    # XMPP password for Jicofo client connections
+    JICOFO_AUTH_PASSWORD:
+    # XMPP password for JVB client connections
+    JVB_AUTH_PASSWORD:
+    # XMPP password for Jigasi MUC client connections
+    JIGASI_XMPP_PASSWORD:
+    # XMPP recorder password for Jibri client connections
+    JIBRI_RECORDER_PASSWORD:
+    # XMPP password for Jibri client connections
+    JIBRI_XMPP_PASSWORD:
+    # JWT_APP_SECRET: my_jitsi_app_secret
 
-secretEnvs: {}
+  shards:
+    shard-0:
+      jvbStartPort: 30000
+    shard-1:
 
 jicofo:
   image: 
@@ -329,7 +345,3 @@ haproxy:
   nodeSelector: {}
   tolerations: []
   affinity: {}
-
-shards:
-  shard-0:
-  shard-1:

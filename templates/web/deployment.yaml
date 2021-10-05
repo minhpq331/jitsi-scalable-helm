@@ -100,7 +100,7 @@ spec:
                 configMapKeyRef:
                   name: {{ include "jitsi.fullname" . | quote }}
                   key: XMPP_RECORDER_DOMAIN
-            {{- range $key, $value := .Values.env }}
+            {{- range $key, $value := .Values.global.env }}
             {{- if has $key $.Values.web.allowedEnv }}
             - name: {{ $key | quote }}
               valueFrom:
@@ -109,7 +109,7 @@ spec:
                   key: {{ $key | quote }}
             {{- end }}
             {{- end }}
-            {{- range $key, $value := .Values.secretEnvs }}
+            {{- range $key, $value := .Values.global.secretEnvs }}
             {{- if has $key $.Values.web.allowedEnv }}
             - name: {{ $key | quote }}
               valueFrom:
