@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "jitsi.fullname" . }}-haproxy
+  labels:
+    jitsi/component: haproxy
+    {{- include "jitsi.labels" . | nindent 4 }}
+  {{- with .Values.haproxy.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.haproxy.service.type }}
+  {{- $setNodePorts := (or (eq .Values.haproxy.service.type "NodePort") (eq .Values.haproxy.service.type "LoadBalancer")) }}
+  ports:
+    - port: {{ .Values.haproxy.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+      {{- if (and $setNodePorts (not (empty .Values.haproxy.service.nodePort))) }}
+      nodePort: {{ .Values.haproxy.service.nodePort }}
+      {{- end }}
+  selector:
+    {{- include "jitsi.selectorLabels" . | nindent 4 }}
+    jitsi/component: haproxy
