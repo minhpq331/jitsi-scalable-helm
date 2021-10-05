@@ -42,7 +42,7 @@ spec:
       volumes:
         - name: prosody
           configMap:
-            name: {{ include "jitsi.fullname" . }}-prosody-plugins
+            name: {{ include "jitsi.fullname" . }}-prosody
             items:
               - key: mod_prometheus.lua
                 path: mod_prometheus.lua
@@ -50,6 +50,10 @@ spec:
                 path: mod_measure_stanza_counts.lua
               - key: mod_measure_client_presence.lua
                 path: mod_measure_client_presence.lua
+              {{- range .Values.prosody.extraFiles }}
+              - key: {{ .name }}
+                path: {{ .name }}
+              {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.prosody.image.repository }}:{{ .Values.prosody.image.tag | default .Chart.AppVersion }}"
@@ -79,18 +83,23 @@ spec:
               containerPort: 5281
               protocol: TCP
           volumeMounts:
-          # add-ons that allow exporting of metrics to prometheus (mod_prometheus.lua)
-          # or enrich the available stats (mod_measure_stanza_counts.lua,
-          # mod_measure_client_presence.lua)
-          - name: prosody
-            mountPath: /prosody-plugins-custom/mod_prometheus.lua
-            subPath: mod_prometheus.lua
-          - name: prosody
-            mountPath: /usr/lib/prosody/modules/mod_measure_stanza_counts.lua
-            subPath: mod_measure_stanza_counts.lua
-          - name: prosody
-            mountPath: /usr/lib/prosody/modules/mod_measure_client_presence.lua
-            subPath: mod_measure_client_presence.lua
+            # add-ons that allow exporting of metrics to prometheus (mod_prometheus.lua)
+            # or enrich the available stats (mod_measure_stanza_counts.lua,
+            # mod_measure_client_presence.lua)
+            - name: prosody
+              mountPath: /prosody-plugins-custom/mod_prometheus.lua
+              subPath: mod_prometheus.lua
+            - name: prosody
+              mountPath: /usr/lib/prosody/modules/mod_measure_stanza_counts.lua
+              subPath: mod_measure_stanza_counts.lua
+            - name: prosody
+              mountPath: /usr/lib/prosody/modules/mod_measure_client_presence.lua
+              subPath: mod_measure_client_presence.lua
+            {{- range .Values.prosody.extraFiles }}
+            - name: prosody
+              mountPath: {{ .mountPath }}
+              subPath: {{ .name }}
+            {{- end }}
           env:
             - name: XMPP_DOMAIN
               valueFrom:

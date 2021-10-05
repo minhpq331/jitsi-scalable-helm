@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "jitsi.fullname" . }}-prosody-plugins
+  name: {{ include "jitsi.fullname" . }}-prosody
   labels:
     {{- include "jitsi.labels" . | nindent 4 }}
 data:
@@ -210,3 +210,7 @@ data:
             counters[bucket](count)
         end
     end)
+  {{- range .Values.prosody.extraFiles }}
+  {{ .name }}: |
+    {{- .content | nindent 4 }}
+  {{- end }}
