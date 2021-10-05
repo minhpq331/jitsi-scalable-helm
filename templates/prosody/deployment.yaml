@@ -1,0 +1,159 @@
+{{- range $shardName, $shardConfig := .Values.shards }}
+{{- $fullShardName := include "jitsi.fullShardName" (dict "root" $ "shardName" $shardName) -}}
+{{- with $ }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fullShardName }}-prosody
+  labels:
+    {{- include "jitsi.labels" . | nindent 4 }}
+    jitsi/component: prosody
+    jitsi/shard: "{{ $shardName }}"
+spec:
+  replicas: 1 # Only allow 1 replica per shard
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      {{- include "jitsi.selectorLabels" . | nindent 6 }}
+      jitsi/component: prosody
+      jitsi/shard: "{{ $shardName }}"
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        {{- with .Values.prosody.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "jitsi.selectorLabels" . | nindent 8 }}
+        jitsi/component: prosody
+        jitsi/shard: "{{ $shardName }}"
+    spec:
+      {{- with .Values.prosody.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: prosody
+          configMap:
+            name: {{ include "jitsi.fullname" . }}-prosody-plugins
+            items:
+              - key: mod_prometheus.lua
+                path: mod_prometheus.lua
+              - key: mod_measure_stanza_counts.lua
+                path: mod_measure_stanza_counts.lua
+              - key: mod_measure_client_presence.lua
+                path: mod_measure_client_presence.lua
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.prosody.image.repository }}:{{ .Values.prosody.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.prosody.image.pullPolicy }}
+          readinessProbe:
+            ## the command that is called obeys standard exit codes
+            exec:
+              command:
+                - prosodyctl
+                - --config
+                - /config/prosody.cfg.lua
+                - status
+          ports:
+            - name: xmpp-c2s
+              containerPort: 5222
+              protocol: TCP
+            - name: xmpp-s2s
+              containerPort: 5269
+              protocol: TCP
+            - name: xmpp-component
+              containerPort: 5347
+              protocol: TCP
+            - name: bosh-insecure
+              containerPort: 5280
+              protocol: TCP
+            - name: bosh-secure
+              containerPort: 5281
+              protocol: TCP
+          volumeMounts:
+          # add-ons that allow exporting of metrics to prometheus (mod_prometheus.lua)
+          # or enrich the available stats (mod_measure_stanza_counts.lua,
+          # mod_measure_client_presence.lua)
+          - name: prosody
+            mountPath: /prosody-plugins-custom/mod_prometheus.lua
+            subPath: mod_prometheus.lua
+          - name: prosody
+            mountPath: /usr/lib/prosody/modules/mod_measure_stanza_counts.lua
+            subPath: mod_measure_stanza_counts.lua
+          - name: prosody
+            mountPath: /usr/lib/prosody/modules/mod_measure_client_presence.lua
+            subPath: mod_measure_client_presence.lua
+          env:
+            - name: XMPP_DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "jitsi.fullname" . | quote }}
+                  key: XMPP_DOMAIN
+            - name: XMPP_MUC_DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "jitsi.fullname" . | quote }}
+                  key: XMPP_MUC_DOMAIN
+            - name: XMPP_AUTH_DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "jitsi.fullname" . | quote }}
+                  key: XMPP_AUTH_DOMAIN
+            - name: XMPP_GUEST_DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "jitsi.fullname" . | quote }}
+                  key: XMPP_GUEST_DOMAIN
+            - name: XMPP_RECORDER_DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "jitsi.fullname" . | quote }}
+                  key: XMPP_RECORDER_DOMAIN
+            - name: XMPP_INTERNAL_MUC_DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "jitsi.fullname" . | quote }}
+                  key: XMPP_INTERNAL_MUC_DOMAIN
+            {{- range $key, $value := .Values.env }}
+            {{- if has $key $.Values.prosody.allowedEnv }}
+            - name: {{ $key | quote }}
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "jitsi.fullname" $ | quote }}
+                  key: {{ $key | quote }}
+            {{- end }}
+            {{- end }}
+            {{- range $key, $value := .Values.secretEnvs }}
+            {{- if has $key $.Values.prosody.allowedEnv }}
+            - name: {{ $key | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "jitsi.fullname" $ | quote }}
+                  key: {{ $key | quote }}
+            {{- end }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.prosody.resources | nindent 12 }}
+      {{- with .Values.prosody.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.prosody.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.prosody.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
+{{- end }}
+

@@ -1,0 +1,35 @@
+{{- range $shardName, $shardConfig := .Values.shards }}
+{{- $fullShardName := include "jitsi.fullShardName" (dict "root" $ "shardName" $shardName) -}}
+{{- with $ }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullShardName }}-prosody
+  labels:
+    jitsi/component: prosody
+    jitsi/shard: "{{ $shardName }}"
+    {{- include "jitsi.labels" . | nindent 4 }}
+  {{- with .Values.prosody.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.prosody.service.type }}
+  ports:
+    {{- $setNodePorts := (or (eq .Values.prosody.service.type "NodePort") (eq .Values.prosody.service.type "LoadBalancer")) }}
+    {{- range $key, $value := .Values.prosody.service.ports }}
+    - port: {{ $value }}
+      targetPort: {{ $key }}
+      protocol: TCP
+      name: {{ $key }}
+      {{- if (and $setNodePorts (not (empty (index $.Values.prosody.service.nodePorts $key)))) }}
+      nodePort: {{ index $.Values.prosody.service.nodePorts $key }}
+      {{- end }}
+    {{- end }}
+  selector:
+    {{- include "jitsi.selectorLabels" . | nindent 4 }}
+    jitsi/component: prosody
+    jitsi/shard: "{{ $shardName }}"
+{{- end }}
+{{- end }}
