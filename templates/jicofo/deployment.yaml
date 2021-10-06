@@ -43,11 +43,11 @@ spec:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.jicofo.image.repository }}:{{ .Values.jicofo.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.jicofo.image.pullPolicy }}
+          livenessProbe:
+            tcpSocket:
+              port: 8888
           readinessProbe:
-            # caution: this readinessProbe tries to create a new conference and hence also fails if
-            # dependencies (jvb, prosody) are not available
-            httpGet:
-              path: /about/health
+            tcpSocket:
               port: 8888
           env:
             - name: JICOFO_ENABLE_HEALTH_CHECKS

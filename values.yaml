@@ -197,7 +197,7 @@ web:
   # Show shard name on web response with header X-Jitsi-Shard
   showShardName: true
   image: 
-    repository: jitsi/prosody
+    repository: jitsi/web
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
     tag: ""

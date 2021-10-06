@@ -1,5 +1,5 @@
 {{- if .Values.haproxy.ingress.enabled -}}
-{{- $fullName := include "jitsi.fullname" . -}}
+{{- $fullName := printf "%s-%s" (include "jitsi.fullname" .) "haproxy" -}}
 {{- $svcPort := .Values.haproxy.service.port -}}
 {{- if and .Values.haproxy.ingress.className (not (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion)) }}
   {{- if not (hasKey .Values.haproxy.ingress.annotations "kubernetes.io/ingress.class") }}
