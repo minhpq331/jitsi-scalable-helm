@@ -92,6 +92,13 @@ spec:
             {{- toYaml .Values.jvb.securityContext | nindent 12 }}
           image: "{{ .Values.jvb.image.repository }}:{{ .Values.jvb.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.jvb.image.pullPolicy }}
+          ports:
+            - containerPort: 9090
+              name: http
+              protocol: TCP            
+            - containerPort: 8080
+              name: admin
+              protocol: TCP            
           livenessProbe:
             httpGet:
               path: /about/health
@@ -125,7 +132,7 @@ spec:
           env:
             - name: BASE_PORT
               value: {{ $shardConfig.jvbBasePort | quote }}
-            - name: NODE_NAME
+            - name: JVB_WS_SERVER_ID
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name

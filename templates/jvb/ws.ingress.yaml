@@ -1,0 +1,69 @@
+{{- if .Values.jvb.websocket.ingress.enabled -}}
+{{- $svcPort := .Values.jvb.websocket.service.port -}}
+{{- if and .Values.jvb.websocket.ingress.className (not (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion)) }}
+  {{- if not (hasKey .Values.jvb.websocket.ingress.annotations "kubernetes.io/ingress.class") }}
+  {{- $_ := set .Values.jvb.websocket.ingress.annotations "kubernetes.io/ingress.class" .Values.jvb.websocket.ingress.className}}
+  {{- end }}
+{{- end }}
+{{- if semverCompare ">=1.19-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: networking.k8s.io/v1
+{{- else if semverCompare ">=1.14-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: networking.k8s.io/v1beta1
+{{- else -}}
+apiVersion: extensions/v1beta1
+{{- end }}
+kind: Ingress
+metadata:
+  name: {{ include "jitsi.fullname" . }}-jvb-ws
+  labels:
+    {{- include "jitsi.labels" . | nindent 4 }}
+    jitsi/component: jvb
+  {{- with .Values.jvb.websocket.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if and .Values.jvb.websocket.ingress.className (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion) }}
+  ingressClassName: {{ .Values.jvb.websocket.ingress.className }}
+  {{- end }}
+  {{- if .Values.jvb.websocket.ingress.tls }}
+  tls:
+    {{- range .Values.jvb.websocket.ingress.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range .Values.jvb.websocket.ingress.hosts }}
+    - host: {{ . | quote }}
+      http:
+        paths:
+          {{- range $shardName, $shardConfig := $.Values.global.shards }}
+          {{- $fullShardName := include "jitsi.fullShardName" (dict "root" $ "shardName" $shardName) -}}
+          {{- $maxReplicas := $.Values.jvb.replicaCount -}}
+          {{- if $.Values.jvb.autoscaling.enabled }}
+          {{- $maxReplicas = $.Values.jvb.autoscaling.maxReplicas -}}
+          {{- end }}
+          {{- range $replica := (untilStep 0 (int $maxReplicas) 1) }}
+          {{- $serverId := printf "%s-jvb-%d" $fullShardName $replica }}
+          - path: /colibri-ws/{{ $serverId }}/
+            {{- if semverCompare ">=1.18-0" $.Capabilities.KubeVersion.GitVersion }}
+            pathType: Prefix
+            {{- end }}
+            backend:
+              {{- if semverCompare ">=1.19-0" $.Capabilities.KubeVersion.GitVersion }}
+              service:
+                name: {{ $fullShardName }}-jvb-ws-{{ $replica }}
+                port:
+                  number: {{ $svcPort }}
+              {{- else }}
+              serviceName: {{ $fullShardName }}-jvb-ws-{{ $replica }}
+              servicePort: {{ $svcPort }}
+              {{- end }}
+          {{- end }}
+          {{- end }}
+    {{- end }}
+{{- end }}

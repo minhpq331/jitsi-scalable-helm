@@ -1,4 +1,4 @@
-{{- if and .Values.jvb.enabled .Values.jvb.servicePerPod.enabled }}
+{{- if and .Values.jvb.enabled .Values.jvb.udp.service.enabled }}
 {{- range $shardName, $shardConfig := .Values.global.shards }}
 {{- $fullShardName := include "jitsi.fullShardName" (dict "root" $ "shardName" $shardName) -}}
 {{- with $ }}
@@ -12,13 +12,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ $fullShardName }}-jvb-{{ $replica }}
+  name: {{ $fullShardName }}-jvb-udp-{{ $replica }}
   labels:
     jitsi/component: jvb
     jitsi/shard: "{{ $shardName }}"
     jitsi/replica: "{{ $replica }}"
     {{- include "jitsi.labels" . | nindent 4 }}
-  {{- with .Values.jvb.servicePerPod.annotations }}
+  {{- with .Values.jvb.udp.service.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
