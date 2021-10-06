@@ -1,9 +1,11 @@
+{{- if .Values.haproxy.enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ include "jitsi.fullname" . }}-haproxy
   labels:
     {{- include "jitsi.labels" . | nindent 4 }}
+    jitsi/component: haproxy
 data:
   haproxy.cfg: |
     global
@@ -57,3 +59,5 @@ data:
       # A records don't work here because their order might change between calls and would result in different
       # shard IDs for each peered HAproxy
       server-template shard 0-{{ len (keys .Values.global.shards) }} _http._tcp.{{ include "jitsi.fullname" . }}-web.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.web.service.port }} check resolvers kube-dns init-addr none
+
+{{- end }}  
