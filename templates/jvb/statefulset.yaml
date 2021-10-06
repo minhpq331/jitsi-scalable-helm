@@ -1,0 +1,182 @@
+{{- if .Values.jvb.enabled }}
+{{- range $shardName, $shardConfig := .Values.global.shards }}
+{{- $fullShardName := include "jitsi.fullShardName" (dict "root" $ "shardName" $shardName) -}}
+{{- with $ }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $fullShardName }}-jvb
+  labels:
+    {{- include "jitsi.labels" . | nindent 4 }}
+    jitsi/component: jvb
+    jitsi/shard: "{{ $shardName }}"
+  {{- with .Values.jvb.statefulSetAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 8 }}
+  {{- end }}
+spec:
+  {{- if not .Values.jvb.autoscaling.enabled }}
+  replicas: {{ .Values.jvb.replicaCount }}
+  {{- end }}
+  updateStrategy:
+    type: RollingUpdate
+  serviceName: {{ $fullShardName }}-jvb
+  selector:
+    matchLabels:
+      {{- include "jitsi.selectorLabels" . | nindent 6 }}
+      jitsi/component: jvb
+      jitsi/shard: "{{ $shardName }}"
+  # relax ordering guarantees because not needed (any JVB pod can be stopped or started at any time)
+  podManagementPolicy: Parallel
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+      {{- with .Values.jvb.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "jitsi.selectorLabels" . | nindent 8 }}
+        jitsi/component: jvb
+        jitsi/shard: "{{ $shardName }}"
+    spec:
+      {{- with .Values.jvb.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: jvb
+          configMap:
+            name: {{ include "jitsi.fullname" . }}
+            items:
+              - key: entrypoint.sh
+                path: entrypoint.sh
+                mode: 0744
+              - key: graceful_shutdown.sh
+                path: graceful_shutdown.sh
+                mode: 0744
+              {{- range .Values.jvb.extraFiles }}
+              - key: {{ .name }}
+                path: {{ .name }}
+                mode: {{ .mode | default "0400" }}
+              {{- end }}
+      # in case there is a long running conference on a JVB that should be shut down, give it time to finish
+      terminationGracePeriodSeconds: {{ .Values.jvb.terminationGracePeriodSeconds }}
+      containers:
+        {{- if .Values.jvb.monitoring.enabled }}
+        - name: prometheus-exporter
+          # sidecar container that exports stats for prometheus
+          # values are scraped by ../ops/monitoring/jvb-pod-monitor.yaml
+          image: "{{ .Values.jvb.monitoring.image.repository }}:{{ .Values.jvb.monitoring.image.tag | default "1.1.6" }}"
+          imagePullPolicy: {{ .Values.jvb.monitoring.image.pullPolicy }}
+          ports:
+            - containerPort: 9888
+              name: metrics
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 9888
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          args:
+            - "-videobridge-url"
+            - "http://localhost:8080/colibri/stats"
+          resources:
+            {{- toYaml .Values.jvb.monitoring.resources | nindent 12 }}
+        {{- end }}
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.jvb.securityContext | nindent 12 }}
+          image: "{{ .Values.jvb.image.repository }}:{{ .Values.jvb.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.jvb.image.pullPolicy }}
+          livenessProbe:
+            httpGet:
+              path: /about/health
+              port: 8080
+            initialDelaySeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /about/health
+              port: 8080
+            initialDelaySeconds: 10
+          lifecycle:
+            preStop:
+              exec:
+                command: ["bash", "/shutdown/graceful_shutdown.sh", "-t 3"]
+          command:
+            - /entrypoint/entrypoint.sh
+          args:
+            - "/init"
+          volumeMounts:
+            - name: jvb
+              mountPath: /entrypoint/entrypoint.sh
+              subPath: entrypoint.sh
+            - name: jvb
+              mountPath: /shutdown/graceful_shutdown.sh
+              subPath: graceful_shutdown.sh
+            {{- range .Values.jvb.extraFiles }}
+            - name: jvb
+              mountPath: {{ .mountPath }}
+              subPath: {{ .name }}
+            {{- end }}
+          env:
+            - name: BASE_PORT
+              value: {{ $shardConfig.jvbBasePort | quote }}
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: DOCKER_HOST_ADDRESS
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: XMPP_SERVER
+              value: {{ $shardConfig.xmppServer | default (printf "%s-%s" $fullShardName "prosody") | quote }}
+            - name: XMPP_AUTH_DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "jitsi.fullname" . | quote }}
+                  key: XMPP_AUTH_DOMAIN
+            - name: XMPP_INTERNAL_MUC_DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "jitsi.fullname" . | quote }}
+                  key: XMPP_INTERNAL_MUC_DOMAIN
+            {{- range $key, $value := .Values.global.env }}
+            {{- if has $key $.Values.jvb.allowedEnv }}
+            - name: {{ $key | quote }}
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "jitsi.fullname" $ | quote }}
+                  key: {{ $key | quote }}
+            {{- end }}
+            {{- end }}
+            {{- range $key, $value := .Values.global.secretEnvs }}
+            {{- if has $key $.Values.jvb.allowedEnv }}
+            - name: {{ $key | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "jitsi.fullname" $ | quote }}
+                  key: {{ $key | quote }}
+            {{- end }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.jvb.resources | nindent 12 }}
+      {{- with .Values.jvb.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.jvb.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.jvb.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

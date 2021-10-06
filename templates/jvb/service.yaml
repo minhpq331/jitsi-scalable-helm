@@ -1,0 +1,43 @@
+{{- if and .Values.jvb.enabled .Values.jvb.servicePerPod.enabled }}
+{{- range $shardName, $shardConfig := .Values.global.shards }}
+{{- $fullShardName := include "jitsi.fullShardName" (dict "root" $ "shardName" $shardName) -}}
+{{- with $ }}
+{{- $maxReplicas := .Values.jvb.replicaCount -}}
+{{- if .Values.jvb.autoscaling.enabled }}
+{{- $maxReplicas = .Values.jvb.autoscaling.maxReplicas -}}
+{{- end }}
+{{- range $replica := (untilStep 0 (int $maxReplicas) 1) }}
+{{- with $ }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullShardName }}-jvb-{{ $replica }}
+  labels:
+    jitsi/component: jvb
+    jitsi/shard: "{{ $shardName }}"
+    jitsi/replica: "{{ $replica }}"
+    {{- include "jitsi.labels" . | nindent 4 }}
+  {{- with .Values.jvb.servicePerPod.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: NodePort
+  externalTrafficPolicy: "Local"
+  ports:
+    {{- $port := add $shardConfig.jvbBasePort $replica }}
+    - port: {{ $port }}
+      targetPort: {{ $port }}
+      protocol: UDP
+      nodePort: {{ $port }}
+  selector:
+    {{- include "jitsi.selectorLabels" . | nindent 4 }}
+    jitsi/component: jvb
+    jitsi/shard: "{{ $shardName }}"
+    statefulset.kubernetes.io/pod-name: "{{ $fullShardName }}-jvb-{{ $replica }}"
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

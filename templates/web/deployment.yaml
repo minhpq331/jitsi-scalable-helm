@@ -48,6 +48,7 @@ spec:
               {{- range . }}
               - key: {{ .name }}
                 path: {{ .name }}
+                mode: {{ .mode | default "0400" }}
               {{- end }}
       {{- end }}
       containers:
@@ -84,7 +85,7 @@ spec:
             - name: JVB_TCP_HARVESTER_DISABLED
               value: "true"
             - name: DEPLOYMENTINFO_SHARD
-              value: {{ if .Values.web.showShardName }}"1"{{ else }}"0"{{ end }}
+              value: {{ $shardName | quote }}
             - name: XMPP_BOSH_URL_BASE
               value: http://{{ $fullShardName }}-prosody:{{ index .Values.prosody.service.ports "bosh-insecure"}}
             - name: XMPP_DOMAIN

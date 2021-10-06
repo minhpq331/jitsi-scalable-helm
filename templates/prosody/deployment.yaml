@@ -53,6 +53,7 @@ spec:
               {{- range .Values.prosody.extraFiles }}
               - key: {{ .name }}
                 path: {{ .name }}
+                mode: {{ .mode | default "0400" }}
               {{- end }}
       containers:
         - name: {{ .Chart.Name }}
