@@ -1,3 +1,4 @@
+{{- if .Values.prosody.enabled }}
 {{- range $shardName, $shardConfig := .Values.global.shards }}
 {{- $fullShardName := include "jitsi.fullShardName" (dict "root" $ "shardName" $shardName) -}}
 {{- with $ }}
@@ -168,4 +169,4 @@ spec:
       {{- end }}
 {{- end }}
 {{- end }}
-
+{{- end }}

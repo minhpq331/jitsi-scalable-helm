@@ -1,3 +1,4 @@
+{{- if .Values.prosody.enabled }}
 {{- range $shardName, $shardConfig := .Values.global.shards }}
 {{- $fullShardName := include "jitsi.fullShardName" (dict "root" $ "shardName" $shardName) -}}
 {{- with $ }}
@@ -31,5 +32,6 @@ spec:
     {{- include "jitsi.selectorLabels" . | nindent 4 }}
     jitsi/component: prosody
     jitsi/shard: "{{ $shardName }}"
+{{- end }}
 {{- end }}
 {{- end }}
