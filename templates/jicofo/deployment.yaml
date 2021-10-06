@@ -51,9 +51,9 @@ spec:
               port: 8888
           env:
             - name: JICOFO_ENABLE_HEALTH_CHECKS
-              value: "1"
+              value: "true"
             - name: JICOFO_ENABLE_BRIDGE_HEALTH_CHECKS
-              value: "1"
+              value: "true"
             - name: XMPP_SERVER
               value: {{ $fullShardName }}-prosody
             - name: XMPP_DOMAIN
