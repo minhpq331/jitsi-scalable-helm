@@ -1,0 +1,19 @@
+{{- if .Values.web.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "jitsi.fullname" . }}-web-headless
+  labels:
+    jitsi/component: web
+    {{- include "jitsi.labels" . | nindent 4 }}
+spec:
+  clusterIP: None
+  ports:
+    - port: {{ .Values.web.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "jitsi.selectorLabels" . | nindent 4 }}
+    jitsi/component: web
+{{- end }}

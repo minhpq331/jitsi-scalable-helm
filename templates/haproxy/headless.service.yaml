@@ -1,0 +1,14 @@
+{{- if .Values.haproxy.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "jitsi.fullname" . }}-haproxy-headless
+  labels:
+    jitsi/component: haproxy
+    {{- include "jitsi.labels" . | nindent 4 }}
+spec:
+  clusterIP: None
+  selector:
+    {{- include "jitsi.selectorLabels" . | nindent 4 }}
+    jitsi/component: haproxy
+{{- end }}

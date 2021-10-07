@@ -29,6 +29,10 @@ spec:
       targetPort: http
       protocol: TCP
       name: http
+    - port: {{ .Values.jvb.websocket.service.adminPort }}
+      targetPort: admin
+      protocol: TCP
+      name: admin
   selector:
     {{- include "jitsi.selectorLabels" . | nindent 4 }}
     jitsi/component: jvb

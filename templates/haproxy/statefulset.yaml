@@ -8,7 +8,7 @@ metadata:
     jitsi/component: haproxy
 spec:
   replicas: 2
-  serviceName: {{ include "jitsi.fullname" . }}-haproxy
+  serviceName: {{ include "jitsi.fullname" . }}-haproxy-headless
   selector:
     matchLabels:
       {{- include "jitsi.selectorLabels" . | nindent 6 }}
@@ -16,6 +16,7 @@ spec:
   template:
     metadata:
       annotations:
+        checksum/privateconfig: {{ include (print $.Template.BasePath "/haproxy/configmap.yaml") . | sha256sum }}
         {{- with .Values.haproxy.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -45,8 +46,8 @@ spec:
             - >-
               apt-get update && apt-get install -y dnsutils;
               [[ $HOSTNAME = '{{ $peer1 }}' ]] &&
-              export OTHER_HOSTNAME={{ $peer0 }} OTHER_IP=$(nslookup {{ $peer0 }}.{{ include "jitsi.fullname" . }}-haproxy | awk 'NR==5 {print $2}') ||
-              export OTHER_HOSTNAME={{ $peer1 }} OTHER_IP=$(nslookup {{ $peer1 }}.{{ include "jitsi.fullname" . }}-haproxy | awk 'NR==5 {print $2}');
+              export OTHER_HOSTNAME={{ $peer0 }} OTHER_IP=$(nslookup {{ $peer0 }}.{{ include "jitsi.fullname" . }}-haproxy-headless | awk 'NR==5 {print $2}') ||
+              export OTHER_HOSTNAME={{ $peer1 }} OTHER_IP=$(nslookup {{ $peer1 }}.{{ include "jitsi.fullname" . }}-haproxy-headless | awk 'NR==5 {print $2}');
               exec /docker-entrypoint.sh haproxy -f /usr/local/etc/haproxy/haproxy.cfg
           livenessProbe:
             httpGet:

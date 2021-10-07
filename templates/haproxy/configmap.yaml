@@ -51,13 +51,13 @@ data:
       mode http
       option forwardfor
       http-reuse safe
-      http-request set-header X-Jitsi-Room %[urlp(room)]
+      http-request set-header Room %[urlp(room)]
       acl room_found urlp(room) -m found
       stick-table type string len 128 size 2k expire 1d peers mypeers
-      stick on hdr(X-Jitsi-Room) if room_found
+      stick on hdr(Room) if room_found
       # _http._tcp.web.jitsi.svc.cluster.local:80 is a SRV DNS record
       # A records don't work here because their order might change between calls and would result in different
       # shard IDs for each peered HAproxy
-      server-template shard 0-{{ len (keys .Values.global.shards) }} _http._tcp.{{ include "jitsi.fullname" . }}-web.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.web.service.port }} check resolvers kube-dns init-addr none
+      server-template shard 0-{{ len (keys .Values.global.shards) }} _http._tcp.{{ include "jitsi.fullname" . }}-web-headless.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.web.service.port }} check resolvers kube-dns init-addr none
 
 {{- end }}  

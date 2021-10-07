@@ -32,6 +32,7 @@ spec:
   template:
     metadata:
       annotations:
+        checksum/privateconfig: {{ include (print $.Template.BasePath "/jvb/configmap.yaml") . | sha256sum }}
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
         checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
       {{- with .Values.jvb.podAnnotations }}
@@ -49,7 +50,7 @@ spec:
       volumes:
         - name: jvb
           configMap:
-            name: {{ include "jitsi.fullname" . }}
+            name: {{ include "jitsi.fullname" . }}-jvb
             items:
               - key: entrypoint.sh
                 path: entrypoint.sh

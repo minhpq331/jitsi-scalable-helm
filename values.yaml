@@ -406,6 +406,7 @@ jvb:
       enabled: true
       annotations: {}
       port: 9090
+      adminPort: 8080
 
     ingress:
       enabled: false

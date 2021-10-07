@@ -26,6 +26,7 @@ spec:
   template:
     metadata:
       annotations:
+        checksum/privateconfig: {{ include (print $.Template.BasePath "/web/configmap.yaml") . | sha256sum }}
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
         checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
         {{- with .Values.web.podAnnotations }}
@@ -85,8 +86,6 @@ spec:
               value: "1"
             - name: JVB_TCP_HARVESTER_DISABLED
               value: "true"
-            - name: DEPLOYMENTINFO_SHARD
-              value: {{ $shardName | quote }}
             - name: XMPP_BOSH_URL_BASE
               value: http://{{ $fullShardName }}-prosody:{{ index .Values.prosody.service.ports "bosh-insecure"}}
             - name: XMPP_DOMAIN

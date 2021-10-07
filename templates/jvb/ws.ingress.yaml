@@ -49,9 +49,9 @@ spec:
           {{- end }}
           {{- range $replica := (untilStep 0 (int $maxReplicas) 1) }}
           {{- $serverId := printf "%s-jvb-%d" $fullShardName $replica }}
-          - path: /colibri-ws/{{ $serverId }}/
+          - path: /colibri-ws/{{ $serverId }}/*
             {{- if semverCompare ">=1.18-0" $.Capabilities.KubeVersion.GitVersion }}
-            pathType: Prefix
+            pathType: ImplementationSpecific
             {{- end }}
             backend:
               {{- if semverCompare ">=1.19-0" $.Capabilities.KubeVersion.GitVersion }}
