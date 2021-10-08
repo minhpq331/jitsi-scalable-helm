@@ -43,7 +43,7 @@ Apart from that, there are a few things to note about my chart:
 - **Easiest and fastest way** to deploy a scalable jitsi cluster on cloud environments.
 - JVB NodePort is calculated based on `jvbBasePort` and pod index in statefulset. You can predict those ports like this: with `jvbBasePort = 30000`, `jvb-0` will expose 30000, `jvb-1` will expose 30001,...
 
-Checkout [examples] folder for more deployment examples.
+Checkout default [values.yaml](values.yaml) for more parameter details.
 
 ## Attentions
 
