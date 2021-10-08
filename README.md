@@ -23,9 +23,9 @@ This chart bootstraps a scalable [jitsi-meet](https://jitsi.org/jitsi-meet/) dep
 
 This architecture is from this repo [https://github.com/hpi-schul-cloud/jitsi-deployment](https://github.com/hpi-schul-cloud/jitsi-deployment). I only made some modifications to fit more general cases.
 
-![Architecture Jitsi Meet](docs/architecture/build/jitsi_meet_one_shard.png)
+![Architecture Jitsi Meet](https://github.com/hpi-schul-cloud/jitsi-deployment/blob/master/docs/architecture/build/jitsi_meet_one_shard.png)
 
-This image show only a single shard. A more detailed explanation of the system architecture with multiple shards can be found in [docs/architecture.md].
+This image show only a single shard. A more detailed explanation of the system architecture with multiple shards can be found in [original architecture](https://github.com/hpi-schul-cloud/jitsi-deployment/blob/master/docs/architecture/architecture.md).
 
 This chart is tested with kubernetes 1.20, 1.21 on 
 
