@@ -86,7 +86,7 @@ global:
 
     #   # Prosody specific shard configs
     #   prosodyNodePorts: # Assign nodeport to expose prosody
-    #     bosh-insecure: 23423
+    #     bosh-insecure: 
     #     xmpp-c2s:
     #     xmpp-component:
     #     # bosh-secure:
