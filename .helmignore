@@ -25,3 +25,6 @@
 .vscode/
 # GitHub Pages
 docs/
+
+# Example folder
+examples/
