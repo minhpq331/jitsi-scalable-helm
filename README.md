@@ -24,7 +24,9 @@ This chart bootstraps a scalable [jitsi-meet](https://jitsi.org/jitsi-meet/) dep
 
 - [Helm v3](https://helm.sh)
 - A Kubernetes cluster (>= 1.17 - dont know if it work before this version) with public-accessible nodes for JVB
-- Opened firewall rules for JVB's port ranges (for ex: 30000-30xxx)
+- Opened firewall rules for JVB's port ranges (for ex: 30000-30xxx + UDP)
+  
+> JVB NodePort is calculated based on `shard-[n].jvbBasePort` and pod index in statefulset. You can predict those ports like this: with `shard-0.jvbBasePort = 30000`, `shard-0-jvb-0` will expose 30000, `shard-0-jvb-1` will expose 30001,... So in order to make jvb work, you need to open 30000-300xx port on worker nodes with UDP protocol
 
 ## Architecture
 
@@ -48,7 +50,6 @@ Apart from that, there are a few things to note about my chart:
 - Built-in ability to **inject custom files to prosody, web and jvb components**. I uses this a lot to inject custom plugins, custom webpages, modify default configs,...
 - **Separate deployment between controller components (prosody, jicofo, haproxy, web) and data components (jvb, jibri) is supported**. For example: Separated cluster for jvb, jibri,... You can choose components to install on each cluster.
 - **Easiest and fastest way** to deploy a scalable jitsi cluster on cloud environments.
-- JVB NodePort is calculated based on `jvbBasePort` and pod index in statefulset. You can predict those ports like this: with `jvbBasePort = 30000`, `jvb-0` will expose 30000, `jvb-1` will expose 30001,...
 
 Checkout default [values.yaml](values.yaml) for more parameter details.
 
