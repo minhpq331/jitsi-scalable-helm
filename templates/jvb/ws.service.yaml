@@ -23,16 +23,18 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  type: ClusterIP
+  type: {{ .Values.jvb.websocket.service.type }}
   ports:
-    - port: {{ .Values.jvb.websocket.service.port }}
-      targetPort: http
+    {{- $setNodePorts := (or (eq .Values.jvb.websocket.service.type "NodePort") (eq .Values.jvb.websocket.service.type "LoadBalancer")) }}
+    {{- range $key, $value := .Values.jvb.websocket.service.ports }}
+    - port: {{ $value }}
+      targetPort: {{ $key }}
       protocol: TCP
-      name: http
-    - port: {{ .Values.jvb.websocket.service.adminPort }}
-      targetPort: admin
-      protocol: TCP
-      name: admin
+      name: {{ $key }}
+      {{- if (and $setNodePorts (not (empty (index $shardConfig.jvbWebsocketNodePorts $key)))) }}
+      nodePort: {{ index $shardConfig.jvbWebsocketNodePorts $key }}
+      {{- end }}
+    {{- end }}
   selector:
     {{- include "jitsi.selectorLabels" . | nindent 4 }}
     jitsi/component: jvb

@@ -5,36 +5,48 @@
 nameOverride: ""
 fullnameOverride: ""
 
+# Global configs which used by all components
 global:
+  # Internal XMPP domain configs
   xmpp:
     domain: meet.jitsi
     authDomain:
     mucDomain:
     internalMucDomain:
     guestDomain:
+
+  # Jitsi Docker environment. For more options checkout .env.example 
+  # from this repo: https://github.com/jitsi/docker-jitsi-meet
   env: 
+    JVB_WS_DOMAIN: ws.meet.example.com
+    PUBLIC_URL: https://meet.example.com
+
     ENABLE_AUTH: 0
     ENABLE_GUESTS: 1
     ENABLE_COLIBRI_WEBSOCKET: 1
     GLOBAL_CONFIG: statistics = "internal";\nstatistics_interval = 15;
     GLOBAL_MODULES: prometheus,measure_stanza_counts,measure_client_presence
+    XMPP_MUC_MODULES: muc_meeting_id,muc_domain_mapper
+
     JIBRI_BREWERY_MUC: jibribrewery
     JIBRI_RECORDER_USER: recorder
     JIBRI_XMPP_USER: jibri
+
     JICOFO_AUTH_USER: focus
+
     JIGASI_BREWERY_MUC: jigasibrewery
     JIGASI_XMPP_USER: jigasi
+
     JVB_AUTH_USER: jvb
     JVB_BREWERY_MUC: jvbbrewery
     JVB_ENABLE_APIS: colibri,rest
-    JVB_WS_DOMAIN: ws.meet.example.com
-    PUBLIC_URL: https://meet.example.com
+
     TZ: UTC
-    XMPP_MUC_MODULES: muc_meeting_id,muc_domain_mapper
 
     # For more environment please check docker repo: https://github.com/jitsi/docker-jitsi-meet
     # JWT_APP_ID: my_jitsi_app_id
 
+  # Same as above but for storing secrets
   secretEnvs: 
     JIBRI_RECORDER_PASSWORD: # Required
     JIBRI_XMPP_PASSWORD: # Required
@@ -46,12 +58,35 @@ global:
     # Any env contains secret should be placed here. Check docker repo for more env: https://github.com/jitsi/docker-jitsi-meet
     # JWT_APP_SECRET: my_jitsi_app_secret
 
+  # Shard configs. To add new shard just duplicate this `shard-0` block and rename it to shard-1, shard-2,...
   shards:
     shard-0:
-      jvbBasePort: 30000 # Use with jvb enabled
+      # JVB specific shard configs
+      xmppServer: # Overrides XMPP_SERVER for jvb on this shard
+      jvbBasePort: 30000 # Base nodeport for jvb on this shard
+      jvbWebsocketNodePorts: # Assign nodeport to expose colibri websocket
+        http:
+        # admin:
+
+      # Prosody specific shard configs
+      prosodyNodePorts: # Assign nodeport to expose prosody
+        bosh-insecure:
+        xmpp-c2s:
+        xmpp-component:
+        # bosh-secure:
+        # xmpp-s2s:
+
     # shard-1:
     #   jvbBasePort: 31000 # Use with jvb enabled
+    #   xmppServer: # Overrides XMPP_SERVER for jvb on this shard
+    #   prosodyNodePorts:
+    #     bosh-insecure:
+    #     # bosh-secure:
+    #     # xmpp-c2s:
+    #     # xmpp-s2s:
+    #     # xmpp-component:
 
+# Jicofo specific configurations
 jicofo:
   enabled: true
   image: 
@@ -73,6 +108,8 @@ jicofo:
   tolerations: []
   affinity: {}
 
+  # Allowed environment variables (include normal env and secret env) to pass to jicofo pod
+  # Usually don't need to change this
   allowedEnv:
     - AUTH_TYPE
     - BRIDGE_AVG_PARTICIPANT_STRESS
@@ -102,6 +139,7 @@ jicofo:
     - OCTO_BRIDGE_SELECTION_STRATEGY
     - TZ
 
+# Prosody specific configurations
 prosody:
   enabled: true
   image: 
@@ -117,17 +155,12 @@ prosody:
     annotations: {}
     ports:
       bosh-insecure: 5280
-      bosh-secure: 5281
       xmpp-c2s: 5222
-      xmpp-s2s: 5269
       xmpp-component: 5347
-    nodePorts:
-      bosh-insecure:
-      bosh-secure:
-      xmpp-c2s:
-      xmpp-s2s:
-      xmpp-component:
+      # xmpp-s2s: 5269
+      # bosh-secure: 5281
 
+  # Inject your custom files (configs, plugins,...) to prosody container 
   extraFiles: []
     # - name: some-plugin.lua
     #   mountPath: /prosody-plugins-custom/some-plugin.lua
@@ -146,6 +179,8 @@ prosody:
   tolerations: []
   affinity: {}
 
+  # Allowed environment variables (include normal env and secret env) to pass to prosody pod
+  # Usually don't need to change this
   allowedEnv:
     - AUTH_TYPE
     - ENABLE_AUTH
@@ -200,6 +235,7 @@ prosody:
     - TURNS_PORT
     - TZ
 
+# Web specific configurations
 web:
   enabled: true
   image: 
@@ -216,7 +252,7 @@ web:
     port: 80
     # nodePort: 32080
 
-  # Only work with 1 shard. You can omit haproxy to expose web service directly
+  # Only work if you have 1 shard. In that case you can disable haproxy and expose web service directly
   ingress:
     enabled: false
     className: ""
@@ -232,7 +268,8 @@ web:
     #  - secretName: chart-example-tls
     #    hosts:
     #      - chart-example.local
-  
+
+  # Inject your custom files (configs, webpages,...) to web container 
   extraFiles: []
     # - name: plugin.head.html
     #   mountPath: /usr/share/jitsi-meet/plugin.head.html
@@ -254,6 +291,8 @@ web:
   tolerations: []
   affinity: {}
 
+  # Allowed environment variables (include normal env and secret env) to pass to web pod
+  # Usually don't need to change this
   allowedEnv:
     - ENABLE_COLIBRI_WEBSOCKET
     - ENABLE_FLOC
@@ -336,6 +375,7 @@ web:
     - TESTING_OCTO_PROBABILITY
     - TOKEN_AUTH_URL
 
+# HAproxy specific configurations, used to load balance between shards
 haproxy:
   enabled: true
   image: 
@@ -351,6 +391,7 @@ haproxy:
     port: 80
     # nodePort: 32080
 
+  # Expose this as your web domain
   ingress:
     enabled: false
     className: ""
@@ -378,9 +419,11 @@ haproxy:
   tolerations: []
   affinity: {}
 
+# JVB specific configurations
 jvb:
   enabled: true
 
+  # Number of JVB for each shard if you don't want autoscaling
   replicaCount: 1
 
   image:
@@ -391,23 +434,28 @@ jvb:
 
   imagePullSecrets: []
 
+  # JVB statefulset annotations, used to interact with metacontroller if you like
   statefulSetAnnotations: {}
     # service-per-pod-label: "statefulset.kubernetes.io/pod-name"
 
   podAnnotations: {}
 
+  # Expose directly udp port as NodePort.
   udp:
     service:
       enabled: true
       annotations: {}
 
+  # Expose websocket
   websocket:
     service:
       enabled: true
       annotations: {}
-      port: 9090
-      adminPort: 8080
+      ports:
+        http: 9090
+        # admin: 8080
 
+    # Enable this ingress to auto expose colibri websocket and load balance between jvbs
     ingress:
       enabled: false
       className: ""
@@ -429,6 +477,7 @@ jvb:
     #   cpu: "8000m"
     #   memory: "1000Mi"
 
+  # JVB autoscaling config. Checkout README.md for more detail on how each JVB's NodePort is calculated
   autoscaling:
     enabled: false
     minReplicas: 1
@@ -442,8 +491,11 @@ jvb:
 
   affinity: {}
 
+  # Time to wait for JVB to gracefully stop. It depends on your room duration.
   terminationGracePeriodSeconds: 3600
 
+  # Allowed environment variables (include normal env and secret env) to pass to web pod
+  # Usually don't need to change this
   allowedEnv:
     - ENABLE_COLIBRI_WEBSOCKET
     - ENABLE_OCTO
@@ -460,6 +512,7 @@ jvb:
     - JVB_OCTO_REGION
     - TZ
 
+  # Enable prometheus exporter sidecar for JVBs
   monitoring:
     enabled: false
     image:

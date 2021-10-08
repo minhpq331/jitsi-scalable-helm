@@ -24,8 +24,8 @@ spec:
       targetPort: {{ $key }}
       protocol: TCP
       name: {{ $key }}
-      {{- if (and $setNodePorts (not (empty (index $.Values.prosody.service.nodePorts $key)))) }}
-      nodePort: {{ index $.Values.prosody.service.nodePorts $key }}
+      {{- if (and $setNodePorts (not (empty (index $shardConfig.prosodyNodePorts $key)))) }}
+      nodePort: {{ index $shardConfig.prosodyNodePorts $key }}
       {{- end }}
     {{- end }}
   selector:
