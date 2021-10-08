@@ -27,7 +27,7 @@ This architecture is from this repo [https://github.com/hpi-schul-cloud/jitsi-de
 
 This image show only a single shard. A more detailed explanation of the system architecture with multiple shards can be found in [original architecture](https://github.com/hpi-schul-cloud/jitsi-deployment/blob/master/docs/architecture/architecture.md).
 
-This chart is tested with kubernetes 1.20, 1.21 on 
+This chart is tested with Google GKE and DigitalOcean DOKS cluster version 1.20, 1.21.
 
 ## Modifications
 
