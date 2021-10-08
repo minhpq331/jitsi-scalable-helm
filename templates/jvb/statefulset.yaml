@@ -69,7 +69,6 @@ spec:
         {{- if .Values.jvb.monitoring.enabled }}
         - name: prometheus-exporter
           # sidecar container that exports stats for prometheus
-          # values are scraped by ../ops/monitoring/jvb-pod-monitor.yaml
           image: "{{ .Values.jvb.monitoring.image.repository }}:{{ .Values.jvb.monitoring.image.tag | default "1.1.6" }}"
           imagePullPolicy: {{ .Values.jvb.monitoring.image.pullPolicy }}
           ports:

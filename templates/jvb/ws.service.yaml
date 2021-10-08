@@ -31,8 +31,8 @@ spec:
       targetPort: {{ $key }}
       protocol: TCP
       name: {{ $key }}
-      {{- if (and $setNodePorts (not (empty (index $shardConfig.jvbWebsocketNodePorts $key)))) }}
-      nodePort: {{ index $shardConfig.jvbWebsocketNodePorts $key }}
+      {{- if (and $setNodePorts (not (empty (index $shardConfig.jvbWebsocketBasePorts $key)))) }}
+      nodePort: {{ add (index $shardConfig.jvbWebsocketBasePorts $key) $replica }}
       {{- end }}
     {{- end }}
   selector:
