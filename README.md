@@ -48,7 +48,8 @@ Apart from that, there are a few things to note about my chart:
 
 - Use **official [jitsi docker image](https://github.com/jitsi/docker-jitsi-meet)** and **pass configurations through env** (I didn't make helm-specific values except some xmpp configurations to communicate between components). You can use your familiar `docker-compose .env` and it will work.
 - Built-in ability to **inject custom files to prosody, web and jvb components**. I uses this a lot to inject custom plugins, custom webpages, modify default configs,...
-- **Separate deployment between controller components (prosody, jicofo, haproxy, web) and data components (jvb, jibri) is supported**. For example: Separated cluster for jvb, jibri,... You can choose components to install on each cluster.
+- **Separate deployment between controller components (prosody, jicofo, haproxy, web) and data components (jvb, jibri) is supported**. 
+For example: Separated cluster for jvb, jibri,... You can choose components to install on each cluster. Or JVB on VMs with docker can join this cluster with prosody 5222 port exposed.
 - **Easiest and fastest way** to deploy a scalable jitsi cluster on cloud environments.
 
 Checkout default [values.yaml](values.yaml) for more parameter details.
