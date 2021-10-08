@@ -6,7 +6,14 @@
 
 ```bash
 git clone https://github.com/minhpq331/jitsi-scalable-helm.git
-helm install easyjitsi ./jitsi-scalable-helm
+
+# Make custom values file
+cp jitsi-scalable-helm/values.yaml values-custom.yaml
+
+# Seed default password
+./jitsi-scalable-helm/scripts/generate_password.sh values-custom.yaml
+
+helm upgrade --install -f values-custom.yaml easyjitsi ./jitsi-scalable-helm
 ```
 
 ## Introduction
