@@ -64,7 +64,7 @@ global:
       # JVB specific shard configs
       xmppServer: # Overrides XMPP_SERVER for jvb on this shard
       jvbBasePort: 30000 # Base nodeport for jvb on this shard
-      jvbWebsocketNodePorts: # Assign nodeport to expose colibri websocket
+      jvbWebsocketBasePorts: # Base nodeport to expose colibri websocket
         http:
         # admin:
 
@@ -77,14 +77,20 @@ global:
         # xmpp-s2s:
 
     # shard-1:
-    #   jvbBasePort: 31000 # Use with jvb enabled
+    #   # JVB specific shard configs
     #   xmppServer: # Overrides XMPP_SERVER for jvb on this shard
-    #   prosodyNodePorts:
-    #     bosh-insecure:
+    #   jvbBasePort: 31000 # Base nodeport for jvb on this shard
+    #   jvbWebsocketBasePorts: # Base nodeport to expose colibri websocket
+    #     http: 
+    #     # admin:
+
+    #   # Prosody specific shard configs
+    #   prosodyNodePorts: # Assign nodeport to expose prosody
+    #     bosh-insecure: 23423
+    #     xmpp-c2s:
+    #     xmpp-component:
     #     # bosh-secure:
-    #     # xmpp-c2s:
     #     # xmpp-s2s:
-    #     # xmpp-component:
 
 # Jicofo specific configurations
 jicofo:
@@ -450,6 +456,7 @@ jvb:
   websocket:
     service:
       enabled: true
+      type: ClusterIP
       annotations: {}
       ports:
         http: 9090
