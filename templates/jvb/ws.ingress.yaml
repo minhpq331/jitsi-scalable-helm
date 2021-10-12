@@ -1,5 +1,5 @@
 {{- if .Values.jvb.websocket.ingress.enabled -}}
-{{- $svcPort := .Values.jvb.websocket.service.port -}}
+{{- $svcPort := .Values.jvb.websocket.service.ports.http -}}
 {{- if and .Values.jvb.websocket.ingress.className (not (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion)) }}
   {{- if not (hasKey .Values.jvb.websocket.ingress.annotations "kubernetes.io/ingress.class") }}
   {{- $_ := set .Values.jvb.websocket.ingress.annotations "kubernetes.io/ingress.class" .Values.jvb.websocket.ingress.className}}
